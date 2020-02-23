@@ -13,6 +13,19 @@ type ControllerServer struct {
 }
 
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+	if len(req.GetName()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Name missing in request")
+	}
+	caps := req.GetVolumeCapabilities()
+	if caps == nil {
+		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities missing in request")
+	}
+	for _, cap := range caps {
+		if cap.GetBlock() != nil {
+			return nil, status.Error(codes.Unimplemented, "Block Volume not supported")
+		}
+	}
+
 	return nil, status.Error(codes.Unimplemented, "")
 }
 

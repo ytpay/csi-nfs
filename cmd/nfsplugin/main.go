@@ -29,15 +29,17 @@ import (
 var (
 	endpoint string
 	nodeID   string
+	server   string
+	share    string
 )
 
 func init() {
-	flag.Set("logtostderr", "true")
+	_ = flag.Set("logtostderr", "true")
 }
 
 func main() {
 
-	flag.CommandLine.Parse([]string{})
+	_ = flag.CommandLine.Parse([]string{})
 
 	cmd := &cobra.Command{
 		Use:   "NFS",
@@ -50,21 +52,25 @@ func main() {
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
 	cmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "node id")
-	cmd.MarkPersistentFlagRequired("nodeid")
+	_ = cmd.MarkPersistentFlagRequired("nodeid")
 
 	cmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
-	cmd.MarkPersistentFlagRequired("endpoint")
+	_ = cmd.MarkPersistentFlagRequired("endpoint")
 
-	cmd.ParseFlags(os.Args[1:])
+	cmd.PersistentFlags().StringVar(&server, "server", "", "nfs server address")
+	_ = cmd.MarkPersistentFlagRequired("server")
+
+	cmd.PersistentFlags().StringVar(&share, "share", "", "nfs share")
+	_ = cmd.MarkPersistentFlagRequired("share")
+
+	_ = cmd.ParseFlags(os.Args[1:])
 	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
 		os.Exit(1)
 	}
 
-	os.Exit(0)
 }
 
 func handle() {
-	d := nfs.NewNFSdriver(nodeID, endpoint)
-	d.Run()
+	nfs.NewNFSdriver(nodeID, endpoint, server, share).Run()
 }

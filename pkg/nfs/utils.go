@@ -2,12 +2,14 @@ package nfs
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"strings"
+	"k8s.io/utils/mount"
 )
 
 func NewDefaultIdentityServer(d *nfsDriver) *IdentityServer {
@@ -19,6 +21,13 @@ func NewDefaultIdentityServer(d *nfsDriver) *IdentityServer {
 func NewControllerServer(d *nfsDriver) *ControllerServer {
 	return &ControllerServer{
 		Driver: d,
+	}
+}
+
+func NewNodeServer(n *nfsDriver, mounter mount.Interface) *nodeServer {
+	return &nodeServer{
+		Driver:  n,
+		mounter: mounter,
 	}
 }
 

@@ -29,8 +29,9 @@ type nfsDriver struct {
 
 	endpoint string
 
-	//ids *identityServer
-	ns    *nodeServer
+	server string
+	share  string
+
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
 }
@@ -43,7 +44,7 @@ var (
 	version = "1.0.0-rc2"
 )
 
-func NewNFSdriver(nodeID, endpoint string) *nfsDriver {
+func NewNFSdriver(nodeID, endpoint, server, share string) *nfsDriver {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
 	n := &nfsDriver{
@@ -51,55 +52,43 @@ func NewNFSdriver(nodeID, endpoint string) *nfsDriver {
 		version:  version,
 		nodeID:   nodeID,
 		endpoint: endpoint,
+		server:   server,
+		share:    share,
 	}
 
 	n.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
-	// NFS plugin does not support ControllerServiceCapability now.
-	// If support is added, it should set to appropriate
-	// ControllerServiceCapability RPC types.
-	n.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{csi.ControllerServiceCapability_RPC_UNKNOWN})
+	n.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME})
 
 	return n
 }
 
-func NewNodeServer(n *nfsDriver, mounter mount.Interface) *nodeServer {
-	return &nodeServer{
-		Driver:  n,
-		mounter: mounter,
-	}
-}
-
 func (n *nfsDriver) Run() {
-	n.ns = NewNodeServer(n, mount.New(""))
-	s := NewNonBlockingGRPCServer()
-	s.Start(n.endpoint,
+	server := NewNonBlockingGRPCServer()
+	server.Start(
+		n.endpoint,
 		NewDefaultIdentityServer(n),
 		// NFS plugin has not implemented ControllerServer
 		// using default controllerserver.
 		NewControllerServer(n),
-		n.ns)
-	s.Wait()
+		NewNodeServer(n, mount.New("")),
+	)
+	server.Wait()
 }
 
-func (n *nfsDriver) AddVolumeCapabilityAccessModes(vc []csi.VolumeCapability_AccessMode_Mode) []*csi.VolumeCapability_AccessMode {
+func (n *nfsDriver) AddVolumeCapabilityAccessModes(vc []csi.VolumeCapability_AccessMode_Mode) {
 	var vca []*csi.VolumeCapability_AccessMode
 	for _, c := range vc {
 		glog.Infof("Enabling volume access mode: %v", c.String())
 		vca = append(vca, &csi.VolumeCapability_AccessMode{Mode: c})
 	}
 	n.cap = vca
-	return vca
 }
 
 func (n *nfsDriver) AddControllerServiceCapabilities(cl []csi.ControllerServiceCapability_RPC_Type) {
 	var csc []*csi.ControllerServiceCapability
-
 	for _, c := range cl {
 		glog.Infof("Enabling controller service capability: %v", c.String())
 		csc = append(csc, NewControllerServiceCapability(c))
 	}
-
 	n.cscap = csc
-
-	return
 }
