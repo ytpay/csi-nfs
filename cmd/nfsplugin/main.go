@@ -27,10 +27,9 @@ import (
 )
 
 var (
-	endpoint string
-	nodeID   string
-	server   string
-	share    string
+	endpoint           string
+	nodeID             string
+	maxStorageCapacity string
 )
 
 func init() {
@@ -54,14 +53,10 @@ func main() {
 	cmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "node id")
 	_ = cmd.MarkPersistentFlagRequired("nodeid")
 
-	cmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
+	cmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "csi endpoint")
 	_ = cmd.MarkPersistentFlagRequired("endpoint")
 
-	cmd.PersistentFlags().StringVar(&server, "server", "", "nfs server address")
-	_ = cmd.MarkPersistentFlagRequired("server")
-
-	cmd.PersistentFlags().StringVar(&share, "share", "", "nfs share")
-	_ = cmd.MarkPersistentFlagRequired("share")
+	cmd.PersistentFlags().StringVar(&maxStorageCapacity, "maxstoragecapacity", "50G", "nfs maxStorageCapacity")
 
 	_ = cmd.ParseFlags(os.Args[1:])
 	if err := cmd.Execute(); err != nil {
@@ -72,5 +67,5 @@ func main() {
 }
 
 func handle() {
-	nfs.NewNFSdriver(nodeID, endpoint, server, share).Run()
+	nfs.NewNFSdriver(nodeID, endpoint, maxStorageCapacity).Run()
 }

@@ -17,9 +17,9 @@ limitations under the License.
 package nfs
 
 import (
+	"github.com/cloudfoundry/bytefmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
-	"k8s.io/utils/mount"
 )
 
 type nfsDriver struct {
@@ -29,8 +29,7 @@ type nfsDriver struct {
 
 	endpoint string
 
-	server string
-	share  string
+	maxStorageCapacity uint64
 
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
@@ -44,16 +43,21 @@ var (
 	version = "1.0.0-rc2"
 )
 
-func NewNFSdriver(nodeID, endpoint, server, share string) *nfsDriver {
+func NewNFSdriver(nodeID, endpoint, maxstoragecapacity string) *nfsDriver {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
+	msc, err := bytefmt.ToBytes(maxstoragecapacity)
+	if err != nil {
+		glog.Errorf("failed to parse maxstoragecapacity: %s: %s", maxstoragecapacity, err)
+		msc = 50 * bytefmt.GIGABYTE
+	}
+
 	n := &nfsDriver{
-		name:     driverName,
-		version:  version,
-		nodeID:   nodeID,
-		endpoint: endpoint,
-		server:   server,
-		share:    share,
+		name:               driverName,
+		version:            version,
+		nodeID:             nodeID,
+		endpoint:           endpoint,
+		maxStorageCapacity: msc,
 	}
 
 	n.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
@@ -70,7 +74,7 @@ func (n *nfsDriver) Run() {
 		// NFS plugin has not implemented ControllerServer
 		// using default controllerserver.
 		NewControllerServer(n),
-		NewNodeServer(n, mount.New("")),
+		NewNodeServer(n),
 	)
 	server.Wait()
 }

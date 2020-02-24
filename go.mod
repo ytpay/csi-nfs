@@ -3,11 +3,13 @@ module github.com/kubernetes-csi/csi-driver-nfs
 go 1.13
 
 require (
+	github.com/cloudfoundry/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/container-storage-interface/spec v1.2.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/kubernetes-csi/csi-lib-utils v0.7.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
+	github.com/pborman/uuid v1.2.0
 	github.com/spf13/cobra v0.0.6
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 	google.golang.org/grpc v1.27.1

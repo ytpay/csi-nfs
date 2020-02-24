@@ -55,7 +55,7 @@ spec:
             - name: CSI_ENDPOINT
               value: /var/lib/csi/sockets/csi-nfsplugin/csi.socket
             - name: FORWARD_ENDPOINT
-              value: 10.24.0.2:8080
+              value: 10.10.2.22:9000
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/csi-nfsplugin/

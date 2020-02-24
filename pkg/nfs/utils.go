@@ -20,14 +20,15 @@ func NewDefaultIdentityServer(d *nfsDriver) *IdentityServer {
 
 func NewControllerServer(d *nfsDriver) *ControllerServer {
 	return &ControllerServer{
-		Driver: d,
+		Driver:  d,
+		mounter: mount.New(""),
 	}
 }
 
-func NewNodeServer(n *nfsDriver, mounter mount.Interface) *nodeServer {
+func NewNodeServer(n *nfsDriver) *nodeServer {
 	return &nodeServer{
 		Driver:  n,
-		mounter: mounter,
+		mounter: mount.New(""),
 	}
 }
 
