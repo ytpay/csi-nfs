@@ -3,60 +3,77 @@
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: csi-nodeplugin-nfsplugin
+  name: csi-driver-registrar
 spec:
   selector:
     matchLabels:
-      app: csi-nodeplugin-nfsplugin
+      app: csi-driver-registrar
   template:
     metadata:
       labels:
-        app: csi-nodeplugin-nfsplugin
+        app: csi-driver-registrar
     spec:
-      serviceAccount: csi-nodeplugin
       hostNetwork: true
       containers:
-        - name: node-driver-registrar
+        - name: csi-driver-registrar
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
           lifecycle:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "rm -rf /registration/csi-nfsplugin /registration/csi-nfsplugin-reg.sock"]
           args:
-            - --v=5
-            - --csi-address=/plugin/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi-nfsplugin/csi.sock
+            - "--v=5"
+            - "--csi-address=$(CSI_ENDPOINT)"
+            - "--kubelet-registration-path=/var/lib/kubelet/plugins/csi-nfsplugin/csi.sock"
           env:
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
           volumeMounts:
             - name: plugin-dir
-              mountPath: /plugin
+              mountPath: /csi
             - name: registration-dir
               mountPath: /registration
-        - name: nfs
+#        - name: nfs
+#          securityContext:
+#            privileged: true
+#            capabilities:
+#              add: ["SYS_ADMIN"]
+#            allowPrivilegeEscalation: true
+#          image: gozap/csi-node-driver-registrar
+#          args :
+#            - "--nodeid=$(NODE_ID)"
+#            - "--endpoint=unix:///csi/csi.sock"
+#          env:
+#            - name: NODE_ID
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: spec.nodeName
+#          imagePullPolicy: IfNotPresent
+#          volumeMounts:
+#            - name: plugin-dir
+#              mountPath: /csi
+#            - name: pods-mount-dir
+#              mountPath: /var/lib/kubelet/pods
+#              mountPropagation: Bidirectional
+        - name: socket2tcp
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: gozap/csi-node-driver-registrar
+          image: mritd/socket2tcp:v1.0.0
           args :
-            - "--nodeid=$(NODE_ID)"
-            - "--endpoint=$(CSI_ENDPOINT)"
+            - "-s=$(CSI_ENDPOINT)"
+            - "-r=$(FORWARD_ENDPOINT)"
           env:
-            - name: NODE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: unix://plugin/csi.sock
+              value: /csi/csi.sock
+            - name: FORWARD_ENDPOINT
+              value: 10.24.0.2:8080
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: plugin-dir
-              mountPath: /plugin
+              mountPath: /csi
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: Bidirectional
@@ -69,7 +86,8 @@ spec:
           hostPath:
             path: /var/lib/kubelet/pods
             type: Directory
-        - hostPath:
+        - name: registration-dir
+          hostPath:
             path: /var/lib/kubelet/plugins_registry
             type: Directory
-          name: registration-dir
+
