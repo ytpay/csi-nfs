@@ -1,8 +1,8 @@
 package nfs
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/pborman/uuid"
 
@@ -33,49 +33,14 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 		}
 	}
 
-	server, ok := req.Parameters["server"]
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "NFS Server address not found")
-	}
-	share, ok := req.Parameters["share"]
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "NFS Server share address not found")
-	}
-
 	volID := uuid.NewUUID().String()
+	glog.Infof("create volume: %s", volID)
 
-	mountRootPath := "/tmp/" + volID
-	defer func() {
-		if err := cs.mounter.Unmount(mountRootPath); err != nil {
-			glog.Errorf("failed to umount [%s]: %s", mountRootPath, err)
-		}
-		if err := os.RemoveAll(mountRootPath); err != nil {
-			glog.Errorf("failed to remove mount dir [%s]: %s", mountRootPath, err)
-		}
-	}()
-	notMnt, err := cs.mounter.IsLikelyNotMountPoint(mountRootPath)
+	volPath := filepath.Join(cs.Driver.sharePoint, volID)
+	_, err := os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(mountRootPath, 0750); err != nil {
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-			notMnt = true
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-	if !notMnt {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("mount point [%s] is already mounted", mountRootPath))
-	}
-	err = cs.mounter.Mount(fmt.Sprintf("%s:%s", server, share), mountRootPath, "nfs", []string{"rw"})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	_, err = os.Stat(mountRootPath + "/" + req.GetName())
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.Mkdir(mountRootPath+"/"+req.GetName(), 0755)
+			err = os.Mkdir(volPath, 0755)
 			if err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
@@ -99,8 +64,24 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 
 }
 
-func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+func (cs *ControllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
+	glog.Infof("remove volume: %s", req.VolumeId)
+	volPath := filepath.Join(cs.Driver.sharePoint, req.VolumeId)
+	_, err := os.Stat(volPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &csi.DeleteVolumeResponse{}, nil
+		} else {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	} else {
+		err := os.RemoveAll(volPath)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		} else {
+			return &csi.DeleteVolumeResponse{}, nil
+		}
+	}
 }
 
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
@@ -120,6 +101,7 @@ func (cs *ControllerServer) ListVolumes(ctx context.Context, req *csi.ListVolume
 }
 
 func (cs *ControllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacityRequest) (*csi.GetCapacityResponse, error) {
+	glog.Info("GetCapacity")
 	return nil, status.Error(codes.Unimplemented, "")
 }
 

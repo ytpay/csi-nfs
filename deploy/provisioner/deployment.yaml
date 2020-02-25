@@ -63,4 +63,8 @@ spec:
       volumes:
         - name: socket-dir
           emptyDir:
+        - name: nfs-server
+          nfs:
+            server: 172.16.10.50
+            path: /mnt/freenas/kubernetes
 
