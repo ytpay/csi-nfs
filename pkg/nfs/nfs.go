@@ -30,7 +30,9 @@ type nfsDriver struct {
 	endpoint string
 
 	maxStorageCapacity uint64
-	sharePoint         string
+	nfsServer          string
+	nfsSharePoint      string
+	nfsLocalMountPoint string
 
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
@@ -44,7 +46,7 @@ var (
 	version = "1.0.0"
 )
 
-func NewNFSdriver(nodeID, endpoint, maxstoragecapacity, sharePoint string) *nfsDriver {
+func NewNFSdriver(nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint string) *nfsDriver {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
@@ -55,11 +57,13 @@ func NewNFSdriver(nodeID, endpoint, maxstoragecapacity, sharePoint string) *nfsD
 
 	n := &nfsDriver{
 		name:               driverName,
-		version:            version,
 		nodeID:             nodeID,
+		version:            version,
 		endpoint:           endpoint,
 		maxStorageCapacity: msc,
-		sharePoint:         sharePoint,
+		nfsServer:          nfsServer,
+		nfsSharePoint:      nfsSharePoint,
+		nfsLocalMountPoint: nfsLocalMountPoint,
 	}
 
 	n.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})

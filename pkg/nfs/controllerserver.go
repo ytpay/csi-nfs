@@ -36,7 +36,7 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 	volID := uuid.NewUUID().String()
 	glog.Infof("create volume: %s", volID)
 
-	volPath := filepath.Join(cs.Driver.sharePoint, volID)
+	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, volID)
 	_, err := os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -54,10 +54,14 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 		return nil, status.Errorf(codes.OutOfRange, "Requested capacity %d exceeds maximum allowed %d", capacity, cs.Driver.maxStorageCapacity)
 	}
 
+	volContext := req.GetParameters()
+	volContext["server"] = cs.Driver.nfsServer
+	volContext["share"] = filepath.Join(cs.Driver.nfsSharePoint, volID)
+
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
 			VolumeId:      volID,
-			VolumeContext: req.GetParameters(),
+			VolumeContext: volContext,
 			CapacityBytes: int64(capacity),
 		},
 	}, nil
@@ -66,7 +70,7 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 
 func (cs *ControllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 	glog.Infof("remove volume: %s", req.VolumeId)
-	volPath := filepath.Join(cs.Driver.sharePoint, req.VolumeId)
+	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.VolumeId)
 	_, err := os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {

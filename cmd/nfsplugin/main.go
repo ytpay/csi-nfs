@@ -30,7 +30,9 @@ var (
 	endpoint           string
 	nodeID             string
 	maxStorageCapacity string
-	sharePoint         string
+	nfsServer          string
+	nfsSharePoint      string
+	nfsLocalMountPoint string
 )
 
 func init() {
@@ -58,7 +60,9 @@ func main() {
 	_ = cmd.MarkPersistentFlagRequired("endpoint")
 
 	cmd.PersistentFlags().StringVar(&maxStorageCapacity, "maxstoragecapacity", "50G", "nfs maxStorageCapacity")
-	cmd.PersistentFlags().StringVar(&sharePoint, "sharepoint", "/nfs", "nfs mount point")
+	cmd.PersistentFlags().StringVar(&nfsServer, "nfsserver", "", "nfs server")
+	cmd.PersistentFlags().StringVar(&nfsSharePoint, "nfssharepoint", "/", "nfs server share point")
+	cmd.PersistentFlags().StringVar(&nfsLocalMountPoint, "nfslocalmountpoint", "/nfs", "nfs local mount point")
 
 	_ = cmd.ParseFlags(os.Args[1:])
 	if err := cmd.Execute(); err != nil {
@@ -69,5 +73,12 @@ func main() {
 }
 
 func handle() {
-	nfs.NewNFSdriver(nodeID, endpoint, maxStorageCapacity, sharePoint).Run()
+	nfs.NewNFSdriver(
+		nodeID,
+		endpoint,
+		maxStorageCapacity,
+		nfsServer,
+		nfsSharePoint,
+		nfsLocalMountPoint,
+	).Run()
 }
