@@ -29,48 +29,29 @@ spec:
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
-#        - name: nfs
-#          securityContext:
-#            privileged: true
-#            capabilities:
-#              add: ["SYS_ADMIN"]
-#            allowPrivilegeEscalation: true
-#          image: gozap/csi-node-driver-registrar
-#          args :
-#            - "--nodeid=$(NODE_ID)"
-#            - "--endpoint=unix:///csi/csi.sock"
-#          env:
-#            - name: NODE_ID
-#              valueFrom:
-#                fieldRef:
-#                  fieldPath: spec.nodeName
-#          imagePullPolicy: IfNotPresent
-#          volumeMounts:
-#            - name: plugin-dir
-#              mountPath: /csi
-#            - name: pods-mount-dir
-#              mountPath: /var/lib/kubelet/pods
-#              mountPropagation: Bidirectional
-        - name: socket2tcp
+        - name: csi-nfs
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: mritd/socket2tcp:v1.0.0
-          args :
-            - "--socket=$(CSI_ENDPOINT)"
-            - "--remote=$(FORWARD_ENDPOINT)"
+          image: gozap/csi-nfs
           lifecycle:
             preStop:
               exec:
                 command: ["bash","-c","rm -rf /registration/csi-nfsplugin /registration/csi-nfsplugin-reg.sock"]
+          args :
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
           env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: /csi/csi.sock
-            - name: FORWARD_ENDPOINT
-              value: 10.10.2.22:9000
-          imagePullPolicy: IfNotPresent
+              value: unix:///csi/csi.sock
+#          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
@@ -92,4 +73,3 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins_registry
             type: Directory
-

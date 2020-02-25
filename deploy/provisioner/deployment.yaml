@@ -40,25 +40,39 @@ spec:
             - "--enable-leader-election"
           env:
             - name: ADDRESS
-              value: /var/lib/csi/sockets/csi-nfsplugin/csi.socket
-          imagePullPolicy: "IfNotPresent"
+              value: /csi/csi.sock
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/csi-nfsplugin/
-        - name: socket2tcp
-          image: mritd/socket2tcp:v1.0.0
+              mountPath: /csi
+        - name: csi-nfs
+          image: gozap/csi-nfs
           args:
-            - "--socket=$(CSI_ENDPOINT)"
-            - "--remote=$(FORWARD_ENDPOINT)"
-          imagePullPolicy: "IfNotPresent"
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nfsserver=$(NFS_SERVER)"
+            - "--nfssharepoint=$(NFS_SHARE)"
+            - "--nfslocalmountpoint=$(NFS_LOCAL_MOUNT)"
           env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
-              value: /var/lib/csi/sockets/csi-nfsplugin/csi.socket
-            - name: FORWARD_ENDPOINT
-              value: 10.10.2.22:9000
+              value: unix:///csi/csi.sock
+            - name: NFS_SERVER
+              value: 172.16.10.50
+            - name: NFS_SHARE
+              value: /mnt/freenas/kuberentes
+            - name: NFS_LOCAL_MOUNT
+              value: /nfs
+#          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/csi-nfsplugin/
+              mountPath: /csi
+            - name: nfs-server
+              mountPath: /nfs
 
       volumes:
         - name: socket-dir

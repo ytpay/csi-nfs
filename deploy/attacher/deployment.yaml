@@ -34,33 +34,35 @@ spec:
       containers:
         - name: csi-attacher
           image: quay.io/k8scsi/csi-attacher:v2.1.0
+          imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
-            - "--csi-address=$(ADDRESS)"
+            - "--csi-address=$(CSI_ENDPOINT)"
             - "--leader-election"
           env:
-            - name: ADDRESS
-              value: /var/lib/csi/sockets/csi-nfsplugin/csi.socket
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /var/lib/csi/sockets/csi-nfsplugin/
-        - name: socket2tcp
-          image: mritd/socket2tcp:v1.0.0
-          args:
-            - "--socket=$(CSI_ENDPOINT)"
-            - "--remote=$(FORWARD_ENDPOINT)"
-          imagePullPolicy: "IfNotPresent"
-          env:
             - name: CSI_ENDPOINT
-              value: /var/lib/csi/sockets/csi-nfsplugin/csi.socket
-            - name: FORWARD_ENDPOINT
-              value: 10.24.0.2:8080
+              value: /csi/csi.sock
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/csi-nfsplugin/
+              mountPath: /csi
+        - name: csi-nfs
+          image: gozap/csi-nfs
+          args:
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+#          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
 
       volumes:
         - name: socket-dir
           emptyDir:
-
