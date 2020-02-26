@@ -1,0 +1,69 @@
+# This YAML file demonstrates how to deploy the external
+# provisioner for use with the mock CSI driver. It
+# depends on the RBAC definitions from rbac.yaml.
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-attacher
+  labels:
+    app: csi-attacher
+spec:
+  selector:
+    app: csi-attacher
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: csi-attacher
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      external-attacher: csi-attacher
+  template:
+    metadata:
+      labels:
+        external-attacher: csi-attacher
+    spec:
+      serviceAccount: csi-attacher
+      containers:
+        - name: csi-attacher
+          image: quay.azk8s.cn/k8scsi/csi-attacher:v2.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--csi-address=$(CSI_ENDPOINT)"
+            - "--leader-election"
+          env:
+            - name: CSI_ENDPOINT
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: csi-nfs
+          image: gozap/csi-nfs:debug
+          args:
+            - "--"
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+#          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+
+      volumes:
+        - name: socket-dir
+          emptyDir:

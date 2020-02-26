@@ -23,7 +23,10 @@ install:
 docker: all
 	cat Dockerfile | docker build -t gozap/csi-nfs:${BUILD_VERSION} -f - .
 
-.PHONY : all release clean install docker
+docker-debug:
+	cat Dockerfile.debug | docker build -t gozap/csi-nfs:debug -f - .
+
+.PHONY: all release clean install docker docker-debug
 
 .EXPORT_ALL_VARIABLES:
 

@@ -46,7 +46,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs
+          image: gozap/csi-nfs:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -63,11 +63,10 @@ spec:
             - name: NFS_SERVER
               value: 172.16.10.50
             - name: NFS_SHARE
-              value: /mnt/freenas/kuberentes
+              value: /mnt/freenas/kubernetes
             - name: NFS_LOCAL_MOUNT
               value: /nfs
-#          imagePullPolicy: IfNotPresent
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: socket-dir
               mountPath: /csi

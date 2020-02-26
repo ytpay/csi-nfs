@@ -46,12 +46,11 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs
+          image: gozap/csi-nfs:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
-#          imagePullPolicy: IfNotPresent
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: NODE_ID
               valueFrom:

@@ -1,0 +1,85 @@
+# This YAML file demonstrates how to deploy the external
+# provisioner for use with the mock CSI driver. It
+# depends on the RBAC definitions from rbac.yaml.
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-provisioner
+  labels:
+    app: csi-provisioner
+spec:
+  selector:
+    app: csi-provisioner
+  ports:
+    - name: dummy
+      port: 12345
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: csi-provisioner
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      external-provisioner: csi-provisioner
+  template:
+    metadata:
+      labels:
+        external-provisioner: csi-provisioner
+    spec:
+      serviceAccount: csi-provisioner
+      containers:
+        - name: csi-provisioner
+          image: quay.azk8s.cn/k8scsi/csi-provisioner:v1.5.0
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+            - "--enable-leader-election"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: csi-nfs
+          image: gozap/csi-nfs:debug
+          args:
+            - "--"
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nfsserver=$(NFS_SERVER)"
+            - "--nfssharepoint=$(NFS_SHARE)"
+            - "--nfslocalmountpoint=$(NFS_LOCAL_MOUNT)"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: NFS_SERVER
+              value: 172.16.10.50
+            - name: NFS_SHARE
+              value: /mnt/freenas/kubernetes
+            - name: NFS_LOCAL_MOUNT
+              value: /nfs
+#          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: nfs-server
+              mountPath: /nfs
+
+      volumes:
+        - name: socket-dir
+          emptyDir:
+        - name: nfs-server
+          nfs:
+            server: 172.16.10.50
+            path: /mnt/freenas/kubernetes
+

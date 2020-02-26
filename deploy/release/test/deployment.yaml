@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+spec:
+  storageClassName: nfs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-nfs
+  labels:
+    app: test-nfs
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-nfs
+  template:
+    metadata:
+      labels:
+        app: test-nfs
+    spec:
+      containers:
+      - name: test-nfs
+        image: nginx:1.17.8-alpine
+        volumeMounts:
+        - name: nfs-pvc
+          mountPath: /data
+      volumes:
+      - name: nfs-pvc
+        persistentVolumeClaim:
+          claimName: test-pvc
+
