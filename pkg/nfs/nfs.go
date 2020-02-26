@@ -19,7 +19,7 @@ package nfs
 import (
 	"github.com/cloudfoundry/bytefmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 )
 
 type nfsDriver struct {
@@ -47,11 +47,11 @@ var (
 )
 
 func NewNFSdriver(nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint string) *nfsDriver {
-	glog.Infof("Driver: %v version: %v", driverName, version)
+	logrus.Infof("Driver: %v version: %v", driverName, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
 	if err != nil {
-		glog.Errorf("failed to parse maxstoragecapacity: %s: %s", maxstoragecapacity, err)
+		logrus.Errorf("failed to parse maxstoragecapacity: %s: %s", maxstoragecapacity, err)
 		msc = 50 * bytefmt.GIGABYTE
 	}
 
@@ -88,7 +88,7 @@ func (n *nfsDriver) Run() {
 func (n *nfsDriver) AddVolumeCapabilityAccessModes(vc []csi.VolumeCapability_AccessMode_Mode) {
 	var vca []*csi.VolumeCapability_AccessMode
 	for _, c := range vc {
-		glog.Infof("Enabling volume access mode: %v", c.String())
+		logrus.Infof("Enabling volume access mode: %v", c.String())
 		vca = append(vca, &csi.VolumeCapability_AccessMode{Mode: c})
 	}
 	n.cap = vca
@@ -97,7 +97,7 @@ func (n *nfsDriver) AddVolumeCapabilityAccessModes(vc []csi.VolumeCapability_Acc
 func (n *nfsDriver) AddControllerServiceCapabilities(cl []csi.ControllerServiceCapability_RPC_Type) {
 	var csc []*csi.ControllerServiceCapability
 	for _, c := range cl {
-		glog.Infof("Enabling controller service capability: %v", c.String())
+		logrus.Infof("Enabling controller service capability: %v", c.String())
 		csc = append(csc, NewControllerServiceCapability(c))
 	}
 	n.cscap = csc

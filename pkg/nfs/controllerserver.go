@@ -4,10 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/pborman/uuid"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +35,7 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 	}
 
 	volID := uuid.NewUUID().String()
-	glog.Infof("create volume: %s", volID)
+	logrus.Infof("create volume: %s", volID)
 
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, volID)
 	_, err := os.Stat(volPath)
@@ -69,7 +70,7 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 }
 
 func (cs *ControllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	glog.Infof("remove volume: %s", req.VolumeId)
+	logrus.Infof("remove volume: %s", req.VolumeId)
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.VolumeId)
 	_, err := os.Stat(volPath)
 	if err != nil {
@@ -111,7 +112,7 @@ func (cs *ControllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacit
 // ControllerGetCapabilities implements the default GRPC callout.
 // Default supports all capabilities
 func (cs *ControllerServer) ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default ControllerGetCapabilities")
+	logrus.Infof("Using default ControllerGetCapabilities")
 
 	return &csi.ControllerGetCapabilitiesResponse{
 		Capabilities: cs.Driver.cscap,

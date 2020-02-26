@@ -2,7 +2,7 @@ package nfs
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,7 +13,7 @@ type IdentityServer struct {
 }
 
 func (ids *IdentityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
-	glog.V(5).Infof("Using default GetPluginInfo")
+	logrus.Infof("Using default GetPluginInfo")
 
 	if ids.Driver.name == "" {
 		return nil, status.Error(codes.Unavailable, "Driver name not configured")
@@ -34,7 +34,7 @@ func (ids *IdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*c
 }
 
 func (ids *IdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default capabilities")
+	logrus.Infof("Using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{
 			{

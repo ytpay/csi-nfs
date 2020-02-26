@@ -13,6 +13,6 @@ RUN set -ex \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /var/cache/apk/*
 
-COPY bin/nfsplugin /nfsplugin
+COPY dist/csi-nfs_linux_amd64 /csi-nfs
 
-ENTRYPOINT ["/nfsplugin"]
+ENTRYPOINT ["/csi-nfs"]

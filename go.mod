@@ -1,4 +1,4 @@
-module github.com/kubernetes-csi/csi-driver-nfs
+module github.com/gozap/csi-nfs
 
 go 1.13
 
@@ -10,6 +10,7 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/pborman/uuid v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.6
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 	google.golang.org/grpc v1.27.1

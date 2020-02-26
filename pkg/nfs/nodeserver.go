@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/net/context"
@@ -35,11 +35,14 @@ type nodeServer struct {
 	mounter mount.Interface
 }
 
-func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+func (ns *nodeServer) NodePublishVolume(_ context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+	logrus.Infof("NodePublishVolume target path: %s", req.GetTargetPath())
 	targetPath := req.GetTargetPath()
 	notMnt, err := ns.mounter.IsLikelyNotMountPoint(targetPath)
+	logrus.Infof("NodePublishVolume %v: %v", notMnt, err)
 	if err != nil {
 		if os.IsNotExist(err) {
+			logrus.Info("NodePublishVolume create target path")
 			if err := os.MkdirAll(targetPath, 0750); err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
@@ -100,7 +103,7 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 }
 
 func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	glog.V(5).Infof("Using default NodeGetInfo")
+	logrus.Infof("Using default NodeGetInfo")
 
 	return &csi.NodeGetInfoResponse{
 		NodeId: ns.Driver.nodeID,
@@ -108,7 +111,7 @@ func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 }
 
 func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default NodeGetCapabilities")
+	logrus.Infof("Using default NodeGetCapabilities")
 
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{

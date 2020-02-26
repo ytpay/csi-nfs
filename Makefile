@@ -1,18 +1,32 @@
-# Copyright 2017 The Kubernetes Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+BUILD_VERSION   := $(shell cat version)
+BUILD_DATE      := $(shell date "+%F %T")
+COMMIT_SHA1     := $(shell git rev-parse HEAD)
 
-CMDS=nfsplugin
-all: build
+all: clean
+	gox -osarch="darwin/amd64 linux/386 linux/amd64 linux/arm" \
+		-output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
+		-ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
+					-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
+					-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
-include release-tools/build.make
+release: all
+	ghr -u mritd -t ${GITHUB_TOKEN} -replace -recreate --debug ${BUILD_VERSION} dist
+
+clean:
+	rm -rf dist
+
+install:
+	go install -ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
+               			-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
+               			-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
+
+docker: all
+	cat Dockerfile | docker build -t gozap/csi-nfs:${BUILD_VERSION} -f - .
+
+.PHONY : all release clean install docker
+
+.EXPORT_ALL_VARIABLES:
+
+GO111MODULE = on
+GOPROXY = https://goproxy.io
+GOSUMDB = sum.golang.google.cn

@@ -35,7 +35,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: gozap/csi-nfs
+          image: gozap/csi-nfs:debug
           lifecycle:
             preStop:
               exec:
