@@ -39,14 +39,10 @@ type nfsDriver struct {
 }
 
 const (
-	driverName = "csi-nfsplugin"
+	driverName = "csi-nfs"
 )
 
-var (
-	version = "1.0.0"
-)
-
-func NewNFSdriver(nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint string) *nfsDriver {
+func NewNFSdriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint string) *nfsDriver {
 	logrus.Infof("Driver: %v version: %v", driverName, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
@@ -77,8 +73,6 @@ func (n *nfsDriver) Run() {
 	server.Start(
 		n.endpoint,
 		NewDefaultIdentityServer(n),
-		// NFS plugin has not implemented ControllerServer
-		// using default controllerserver.
 		NewControllerServer(n),
 		NewNodeServer(n),
 	)

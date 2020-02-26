@@ -2,6 +2,6 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: nfs
-provisioner: csi-nfsplugin
+provisioner: csi-nfs
 parameters:
   archiveOnDelete: "false"

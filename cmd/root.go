@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/gozap/csi-nfs/pkg/nfs"
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,7 @@ var rootCmd = &cobra.Command{
 	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
 		nfs.NewNFSdriver(
+			strings.Trim(Version, "v"),
 			nodeID,
 			endpoint,
 			maxStorageCapacity,

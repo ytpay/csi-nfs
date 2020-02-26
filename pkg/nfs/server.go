@@ -91,6 +91,6 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	logrus.Infof("Listening for connections on address: %#v", listener.Addr())
 
-	server.Serve(listener)
+	_ = server.Serve(listener)
 
 }

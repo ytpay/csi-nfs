@@ -12,7 +12,7 @@ type IdentityServer struct {
 	Driver *nfsDriver
 }
 
-func (ids *IdentityServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
+func (ids *IdentityServer) GetPluginInfo(_ context.Context, _ *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 	logrus.Infof("Using default GetPluginInfo")
 
 	if ids.Driver.name == "" {
@@ -29,11 +29,11 @@ func (ids *IdentityServer) GetPluginInfo(ctx context.Context, req *csi.GetPlugin
 	}, nil
 }
 
-func (ids *IdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
+func (ids *IdentityServer) Probe(_ context.Context, _ *csi.ProbeRequest) (*csi.ProbeResponse, error) {
 	return &csi.ProbeResponse{}, nil
 }
 
-func (ids *IdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
+func (ids *IdentityServer) GetPluginCapabilities(_ context.Context, _ *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
 	logrus.Infof("Using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: []*csi.PluginCapability{
