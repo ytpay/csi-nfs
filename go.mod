@@ -6,6 +6,7 @@ require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48 // indirect
 	github.com/cloudfoundry/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/container-storage-interface/spec v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/kubernetes-csi/csi-lib-utils v0.7.0
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect

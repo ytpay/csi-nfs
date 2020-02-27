@@ -32,6 +32,7 @@ var (
 	nfsServer          string
 	nfsSharePoint      string
 	nfsLocalMountPoint string
+	nfsSnapshotPath    string
 )
 
 var rootCmd = &cobra.Command{
@@ -47,6 +48,7 @@ var rootCmd = &cobra.Command{
 			nfsServer,
 			nfsSharePoint,
 			nfsLocalMountPoint,
+			nfsSnapshotPath,
 		).Run()
 	},
 }
@@ -71,6 +73,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&nfsServer, "nfsserver", "", "nfs server")
 	rootCmd.PersistentFlags().StringVar(&nfsSharePoint, "nfssharepoint", "/", "nfs server share point")
 	rootCmd.PersistentFlags().StringVar(&nfsLocalMountPoint, "nfslocalmountpoint", "/nfs", "nfs local mount point")
+	rootCmd.PersistentFlags().StringVar(&nfsSnapshotPath, "nfssnapshotpath", "/snapshot", "nfs snapshot path")
 	rootCmd.SetVersionTemplate(fmt.Sprintf(versionTpl, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID))
 }
 

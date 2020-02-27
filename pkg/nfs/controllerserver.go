@@ -1,8 +1,13 @@
 package nfs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/golang/protobuf/ptypes"
+
+	"k8s.io/utils/exec"
 
 	"github.com/sirupsen/logrus"
 
@@ -20,7 +25,7 @@ type ControllerServer struct {
 	mounter mount.Interface
 }
 
-func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	if len(req.GetName()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Name missing in request")
 	}
@@ -58,6 +63,28 @@ func (cs *ControllerServer) CreateVolume(_ context.Context, req *csi.CreateVolum
 	volContext := req.GetParameters()
 	volContext["server"] = cs.Driver.nfsServer
 	volContext["share"] = filepath.Join(cs.Driver.nfsSharePoint, volID)
+
+	if req.GetVolumeContentSource() != nil {
+		contentSource := req.GetVolumeContentSource()
+		if contentSource.GetSnapshot() != nil {
+			snapID := contentSource.GetSnapshot().GetSnapshotId()
+			snapPath := filepath.Join(cs.Driver.nfsLocalMountPoint, cs.Driver.nfsSnapshotPath)
+			_, err := os.Stat(snapPath)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			targetPath := filepath.Join(snapPath, snapID+".tar.gz")
+			_, err = os.Stat(targetPath)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			outBs, err := exec.New().CommandContext(ctx, "tar", "-zxpf", targetPath, "-C", volPath).CombinedOutput()
+			if err != nil {
+				return nil, status.Error(codes.Internal, fmt.Sprintf("%s: %s", err.Error(), string(outBs)))
+			}
+		}
+
+	}
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
@@ -119,12 +146,55 @@ func (cs *ControllerServer) ControllerGetCapabilities(_ context.Context, _ *csi.
 	}, nil
 }
 
-func (cs *ControllerServer) CreateSnapshot(_ context.Context, _ *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Unimplemented CreateSnapshot")
+func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
+	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.SourceVolumeId)
+	_, err := os.Stat(volPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	snapPath := filepath.Join(cs.Driver.nfsLocalMountPoint, cs.Driver.nfsSnapshotPath)
+	_, err = os.Stat(snapPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	snapID := uuid.NewUUID().String()
+	logrus.Infof("create volume [%s] snapshot: %s", req.SourceVolumeId, snapID)
+	targetPath := filepath.Join(snapPath, snapID+".tar.gz")
+
+	outBs, err := exec.New().CommandContext(ctx, "tar", "-zcpf", targetPath, volPath).CombinedOutput()
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("%s: %s", err.Error(), string(outBs)))
+	}
+
+	stat, err := os.Stat(targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &csi.CreateSnapshotResponse{Snapshot: &csi.Snapshot{
+		SizeBytes:      stat.Size(),
+		SnapshotId:     snapID,
+		SourceVolumeId: req.SourceVolumeId,
+		CreationTime:   ptypes.TimestampNow(),
+		ReadyToUse:     true,
+	}}, nil
+
 }
 
-func (cs *ControllerServer) DeleteSnapshot(_ context.Context, _ *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Unimplemented DeleteSnapshot")
+func (cs *ControllerServer) DeleteSnapshot(_ context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
+	logrus.Infof("delete volume snapshot: %s", req.SnapshotId)
+	snapPath := filepath.Join(cs.Driver.nfsLocalMountPoint, cs.Driver.nfsSnapshotPath)
+	_, err := os.Stat(snapPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	targetPath := filepath.Join(snapPath, req.SnapshotId+".tar.gz")
+	err = os.Remove(targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &csi.DeleteSnapshotResponse{}, nil
 }
 
 func (cs *ControllerServer) ListSnapshots(_ context.Context, _ *csi.ListSnapshotsRequest) (*csi.ListSnapshotsResponse, error) {

@@ -10,7 +10,7 @@ WORKDIR ${SRC_PATH}
 COPY . .
 
 RUN set -ex \
-    && apk add git \
+    && apk add git tar \
     && export BUILD_VERSION=$(cat version) \
     && export BUILD_DATE=$(date "+%F %T") \
     && export COMMIT_SHA1=$(git rev-parse HEAD) \

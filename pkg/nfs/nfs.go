@@ -33,6 +33,7 @@ type nfsDriver struct {
 	nfsServer          string
 	nfsSharePoint      string
 	nfsLocalMountPoint string
+	nfsSnapshotPath    string
 
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
@@ -42,7 +43,7 @@ const (
 	driverName = "csi-nfs"
 )
 
-func NewNFSdriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint string) *nfsDriver {
+func NewNFSdriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsSnapshotPath string) *nfsDriver {
 	logrus.Infof("Driver: %v version: %v", driverName, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
@@ -60,10 +61,14 @@ func NewNFSdriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsS
 		nfsServer:          nfsServer,
 		nfsSharePoint:      nfsSharePoint,
 		nfsLocalMountPoint: nfsLocalMountPoint,
+		nfsSnapshotPath:    nfsSnapshotPath,
 	}
 
 	n.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
-	n.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME})
+	n.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
+	})
 
 	return n
 }

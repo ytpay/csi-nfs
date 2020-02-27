@@ -1,0 +1,33 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: csi-snapshot-controller
+  labels:
+    app: csi-snapshot-controller
+spec:
+  selector:
+    app: csi-snapshot-controller
+  ports:
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: csi-snapshot-controller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      external-controller: csi-snapshot-controller
+  template:
+    metadata:
+      labels:
+        external-controller: csi-snapshot-controller
+    spec:
+      serviceAccount: csi-snapshot-controller
+      containers:
+        - name: csi-snapshot-controller
+          image: quay.azk8s.cn/k8scsi/snapshot-controller:v2.0.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--v=5"
+            - "--leader-election"
