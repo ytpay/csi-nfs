@@ -7,7 +7,6 @@ metadata:
 spec:
   selector:
     app: csi-snapshot-controller
-  ports:
 ---
 kind: Deployment
 apiVersion: apps/v1
