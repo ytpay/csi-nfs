@@ -30,7 +30,7 @@ spec:
       labels:
         external-attacher: csi-attacher
     spec:
-      serviceAccount: csi-attacher
+      serviceAccountName: csi-attacher
       containers:
         - name: csi-attacher
           image: quay.azk8s.cn/k8scsi/csi-attacher:v2.1.0
@@ -64,4 +64,4 @@ spec:
 
       volumes:
         - name: socket-dir
-          emptyDir:
+          emptyDir: {}

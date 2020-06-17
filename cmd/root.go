@@ -40,7 +40,7 @@ var rootCmd = &cobra.Command{
 	Short:   "CSI based NFS driver",
 	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
-		nfs.NewNFSdriver(
+		nfs.NewNFSDriver(
 			strings.Trim(Version, "v"),
 			nodeID,
 			endpoint,

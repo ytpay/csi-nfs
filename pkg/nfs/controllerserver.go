@@ -33,8 +33,8 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if caps == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities missing in request")
 	}
-	for _, cap := range caps {
-		if cap.GetBlock() != nil {
+	for _, c := range caps {
+		if c.GetBlock() != nil {
 			return nil, status.Error(codes.Unimplemented, "Block Volume not supported")
 		}
 	}

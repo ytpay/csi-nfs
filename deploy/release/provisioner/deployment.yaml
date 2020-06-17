@@ -75,7 +75,7 @@ spec:
 
       volumes:
         - name: socket-dir
-          emptyDir:
+          emptyDir: {}
         - name: nfs-server
           nfs:
             server: 172.16.10.50
