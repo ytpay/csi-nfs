@@ -26,14 +26,12 @@ type ControllerServer struct {
 }
 
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
-	// TODO: The Plugin SHOULD ensure that multiple `CreateVolume` calls for the
-	// 		same name do not result in more than one piece of storage provisioned
-	//		corresponding to that name. If a Plugin is unable to enforce idempotency,
-	//		the CO's error recovery logic could result in multiple (unused) volumes
-	//      being provisioned.
-	if len(req.GetName()) == 0 {
+	reqVolName := req.GetName()
+	if reqVolName == "" {
 		return nil, status.Error(codes.InvalidArgument, "Name missing in request")
 	}
+	logrus.Infof("create volume: %s", reqVolName)
+
 	caps := req.GetVolumeCapabilities()
 	if caps == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities missing in request")
@@ -44,10 +42,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 	}
 
-	volID := uuid.NewUUID().String()
-	logrus.Infof("create volume: %s", volID)
-
-	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, volID)
+	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, reqVolName)
 	_, err := os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -67,7 +62,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	volContext := req.GetParameters()
 	volContext["server"] = cs.Driver.nfsServer
-	volContext["share"] = filepath.Join(cs.Driver.nfsSharePoint, volID)
+	volContext["share"] = filepath.Join(cs.Driver.nfsSharePoint, reqVolName)
 
 	if req.GetVolumeContentSource() != nil {
 		contentSource := req.GetVolumeContentSource()
@@ -93,7 +88,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId:      volID,
+			VolumeId:      reqVolName,
 			VolumeContext: volContext,
 			CapacityBytes: int64(capacity),
 		},
@@ -102,7 +97,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 }
 
 func (cs *ControllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	logrus.Infof("remove volume: %s", req.VolumeId)
+	logrus.Infof("delete volume: %s", req.VolumeId)
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.VolumeId)
 	_, err := os.Stat(volPath)
 	if err != nil {
@@ -145,7 +140,6 @@ func (cs *ControllerServer) GetCapacity(_ context.Context, _ *csi.GetCapacityReq
 // Default supports all capabilities
 func (cs *ControllerServer) ControllerGetCapabilities(_ context.Context, _ *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
 	logrus.Infof("Using default ControllerGetCapabilities")
-
 	return &csi.ControllerGetCapabilitiesResponse{
 		Capabilities: cs.Driver.cscap,
 	}, nil

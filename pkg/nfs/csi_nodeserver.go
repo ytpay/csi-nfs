@@ -64,9 +64,10 @@ func (ns *nodeServer) NodePublishVolume(_ context.Context, req *csi.NodePublishV
 }
 
 func (ns *nodeServer) NodeUnpublishVolume(_ context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+	logrus.Infof("NodeUnpublishVolume target path: %s", req.GetTargetPath())
 	targetPath := req.GetTargetPath()
 	notMnt, err := ns.mounter.IsLikelyNotMountPoint(targetPath)
-
+	logrus.Infof("NodeUnpublishVolume %v: %v", notMnt, err)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, status.Error(codes.NotFound, "Targetpath not found")
@@ -88,9 +89,9 @@ func (ns *nodeServer) NodeUnpublishVolume(_ context.Context, req *csi.NodeUnpubl
 
 func (ns *nodeServer) NodeGetInfo(_ context.Context, _ *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	logrus.Infof("Using default NodeGetInfo")
-
 	return &csi.NodeGetInfoResponse{
-		NodeId: ns.Driver.nodeID,
+		NodeId:            ns.Driver.nodeID,
+		MaxVolumesPerNode: 65535,
 	}, nil
 }
 
