@@ -1,8 +1,7 @@
-FROM golang:1.13.8-alpine3.11 AS builder
+FROM golang:1.14.4-alpine3.12 AS builder
 
 ENV GO111MODULE on
-ENV GOPROXY https://goproxy.io
-ENV GOSUMDB sum.golang.google.cn
+ENV GOPROXY https://goproxy.cn
 ENV SRC_PATH ${GOPATH}/src/github.com/gozap/csi-nfs
 
 WORKDIR ${SRC_PATH}
@@ -19,7 +18,7 @@ RUN set -ex \
         -X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
         -X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
-FROM alpine:3.11
+FROM alpine:3.12
 
 ARG TZ="Asia/Shanghai"
 
@@ -29,7 +28,7 @@ ENV LC_ALL en_US.UTF-8
 ENV LANGUAGE en_US:en
 
 RUN set -ex \
-    && apk add bash tzdata \
+    && apk add bash tzdata ca-certificates \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /var/cache/apk/*
@@ -37,3 +36,5 @@ RUN set -ex \
 COPY --from=builder /go/bin/csi-nfs /csi-nfs
 
 ENTRYPOINT ["/csi-nfs"]
+
+CMD ["--help"]

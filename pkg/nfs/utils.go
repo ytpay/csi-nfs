@@ -13,7 +13,7 @@ import (
 	"k8s.io/utils/mount"
 )
 
-func NewDefaultIdentityServer(d *nfsDriver) *IdentityServer {
+func NewIdentityServer(d *nfsDriver) *IdentityServer {
 	return &IdentityServer{
 		Driver: d,
 	}

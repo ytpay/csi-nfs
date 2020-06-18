@@ -34,11 +34,8 @@ type nonBlockingGRPCServer struct {
 }
 
 func (s *nonBlockingGRPCServer) Start(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
-
 	s.wg.Add(1)
-
 	go s.serve(endpoint, ids, cs, ns)
-
 	return
 }
 
@@ -55,7 +52,6 @@ func (s *nonBlockingGRPCServer) ForceStop() {
 }
 
 func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
-
 	proto, addr, err := ParseEndpoint(endpoint)
 	if err != nil {
 		logrus.Fatal(err.Error())
@@ -89,8 +85,6 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 		csi.RegisterNodeServer(server, ns)
 	}
 
-	logrus.Infof("Listening for connections on address: %#v", listener.Addr())
-
+	logrus.Infof("Listening for connections on address: %v", listener.Addr())
 	_ = server.Serve(listener)
-
 }

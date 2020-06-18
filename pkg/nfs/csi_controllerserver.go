@@ -26,6 +26,11 @@ type ControllerServer struct {
 }
 
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+	// TODO: The Plugin SHOULD ensure that multiple `CreateVolume` calls for the
+	// 		same name do not result in more than one piece of storage provisioned
+	//		corresponding to that name. If a Plugin is unable to enforce idempotency,
+	//		the CO's error recovery logic could result in multiple (unused) volumes
+	//      being provisioned.
 	if len(req.GetName()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Name missing in request")
 	}
@@ -203,4 +208,8 @@ func (cs *ControllerServer) ListSnapshots(_ context.Context, _ *csi.ListSnapshot
 
 func (cs *ControllerServer) ControllerExpandVolume(_ context.Context, _ *csi.ControllerExpandVolumeRequest) (*csi.ControllerExpandVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "Unimplemented ControllerExpandVolume")
+}
+
+func (cs *ControllerServer) ControllerGetVolume(_ context.Context, _ *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "Unimplemented ControllerGetVolume")
 }

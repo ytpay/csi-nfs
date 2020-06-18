@@ -50,6 +50,9 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch"]
 
 ---
 kind: ClusterRoleBinding
@@ -76,14 +79,14 @@ metadata:
   namespace: default
   name: external-provisioner-cfg
 rules:
-# Only one of the following rules for endpoints or leases is required based on
-# what is set for `--leader-election-type`. Endpoints are deprecated in favor of Leases.
-- apiGroups: [""]
-  resources: ["endpoints"]
-  verbs: ["get", "watch", "list", "delete", "update", "create"]
-- apiGroups: ["coordination.k8s.io"]
-  resources: ["leases"]
-  verbs: ["get", "watch", "list", "delete", "update", "create"]
+  # Only one of the following rules for endpoints or leases is required based on
+  # what is set for `--leader-election-type`. Endpoints are deprecated in favor of Leases.
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
 
 ---
 kind: RoleBinding
