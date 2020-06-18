@@ -37,4 +37,4 @@ RUN set -ex \
 COPY --from=builder /go/bin/dlv /usr/bin/dlv
 COPY --from=builder /go/bin/csi-nfs /csi-nfs
 
-CMD ["dlv","--headless=true","--listen=:2345","--api-version=2","--accept-multiclient","--continue=true","exec","/csi-nfs"]
+ENTRYPOINT ["dlv","--headless=true","--listen=:2345","--api-version=2","--accept-multiclient","--continue=true","exec","--","/csi-nfs"]
