@@ -16,7 +16,7 @@ spec:
       hostNetwork: true
       containers:
         - name: csi-driver-registrar
-          image: quay.azk8s.cn/k8scsi/csi-node-driver-registrar:v1.2.0
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.0.2
           args:
             - "--v=5"
             - "--csi-address=$(CSI_ENDPOINT)"
@@ -30,18 +30,17 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: csi-nfs
+          image: gozap/csi-nfs:debug
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: gozap/csi-nfs:debug
           lifecycle:
             preStop:
               exec:
                 command: ["bash","-c","rm -rf /registration/csi-nfs /registration/csi-nfs-reg.sock"]
           args :
-            - "--"
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
           env:
@@ -51,25 +50,16 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
-#          imagePullPolicy: IfNotPresent
-          imagePullPolicy: Always
           volumeMounts:
             - name: plugin-dir
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
-            - name: pods-mount-dir
-              mountPath: /var/lib/kubelet/pods
-              mountPropagation: Bidirectional
       volumes:
         - name: plugin-dir
           hostPath:
             path: /var/lib/kubelet/plugins/csi-nfs
             type: DirectoryOrCreate
-        - name: pods-mount-dir
-          hostPath:
-            path: /var/lib/kubelet/pods
-            type: Directory
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry

@@ -2,17 +2,6 @@
 # provisioner for use with the mock CSI driver. It
 # depends on the RBAC definitions from rbac.yaml.
 
-kind: Service
-apiVersion: v1
-metadata:
-  name: csi-attacher
-  labels:
-    app: csi-attacher
-spec:
-  selector:
-    app: csi-attacher
-
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:

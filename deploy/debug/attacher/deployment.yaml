@@ -2,20 +2,6 @@
 # provisioner for use with the mock CSI driver. It
 # depends on the RBAC definitions from rbac.yaml.
 
-kind: Service
-apiVersion: v1
-metadata:
-  name: csi-attacher
-  labels:
-    app: csi-attacher
-spec:
-  selector:
-    app: csi-attacher
-  ports:
-    - name: dummy
-      port: 12345
-
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -30,10 +16,10 @@ spec:
       labels:
         external-attacher: csi-attacher
     spec:
-      serviceAccount: csi-attacher
+      serviceAccountName: csi-attacher
       containers:
         - name: csi-attacher
-          image: quay.azk8s.cn/k8scsi/csi-attacher:v2.1.0
+          image: quay.io/k8scsi/csi-attacher:v2.2.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -48,11 +34,9 @@ spec:
         - name: csi-nfs
           image: gozap/csi-nfs:debug
           args:
-            - "--"
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
-#          imagePullPolicy: IfNotPresent
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: NODE_ID
               valueFrom:

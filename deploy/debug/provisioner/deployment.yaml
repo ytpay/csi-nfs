@@ -30,10 +30,10 @@ spec:
       labels:
         external-provisioner: csi-provisioner
     spec:
-      serviceAccount: csi-provisioner
+      serviceAccountName: csi-provisioner
       containers:
         - name: csi-provisioner
-          image: quay.azk8s.cn/k8scsi/csi-provisioner:v1.5.0
+          image: quay.io/k8scsi/csi-provisioner:v1.6.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -41,14 +41,12 @@ spec:
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
           image: gozap/csi-nfs:debug
           args:
-            - "--"
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--nfsserver=$(NFS_SERVER)"
@@ -67,8 +65,7 @@ spec:
               value: /mnt/freenas/kubernetes
             - name: NFS_LOCAL_MOUNT
               value: /nfs
-#          imagePullPolicy: IfNotPresent
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
