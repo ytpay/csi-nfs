@@ -1,5 +1,6 @@
 # This YAML file contains driver-registrar & csi driver nodeplugin API objects
 # that are necessary to run CSI nodeplugin for nfs
+
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:

@@ -2,20 +2,6 @@
 # provisioner for use with the mock CSI driver. It
 # depends on the RBAC definitions from rbac.yaml.
 
-kind: Service
-apiVersion: v1
-metadata:
-  name: csi-provisioner
-  labels:
-    app: csi-provisioner
-spec:
-  selector:
-    app: csi-provisioner
-  ports:
-    - name: dummy
-      port: 12345
-
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -36,10 +22,10 @@ spec:
           image: quay.io/k8scsi/csi-provisioner:v1.6.0
           args:
             - "--v=5"
-            - "--csi-address=$(ADDRESS)"
+            - "--csi-address=$(CSI_ENDPOINT)"
             - "--enable-leader-election"
           env:
-            - name: ADDRESS
+            - name: CSI_ENDPOINT
               value: /csi/csi.sock
           volumeMounts:
             - name: socket-dir

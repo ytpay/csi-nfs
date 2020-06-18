@@ -16,6 +16,7 @@ spec:
       labels:
         external-attacher: csi-attacher
     spec:
+      hostNetwork: true
       serviceAccountName: csi-attacher
       containers:
         - name: csi-attacher
