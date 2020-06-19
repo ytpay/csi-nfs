@@ -13,7 +13,7 @@ clean:
 	rm -rf dist
 
 release: all
-	ghr -u mritd -t ${GITHUB_TOKEN} -replace -recreate --debug ${BUILD_VERSION} dist
+	ghr -u gozap -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} deploy
 
 install:
 	go install -ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
@@ -31,4 +31,4 @@ docker-debug:
 .EXPORT_ALL_VARIABLES:
 
 GO111MODULE = on
-GOPROXY = https://goproxy.cm
+GOPROXY = https://goproxy.cn
