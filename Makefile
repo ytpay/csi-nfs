@@ -9,11 +9,10 @@ all: clean
 					-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
 					-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
-clean:
-	rm -rf dist
-
-release: all
-	ghr -u gozap -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} deploy
+release: docker-push
+	rm -f dist/deploy.tar.gz
+	tar -zcf dist/deploy.tar.gz deploy
+	ghr -u gozap -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} dist/deploy.tar.gz
 
 install:
 	go install -ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
@@ -23,8 +22,14 @@ install:
 docker:
 	cat Dockerfile | docker build -t gozap/csi-nfs:${BUILD_VERSION} -f - .
 
+docker-push: docker
+	docker push gozap/csi-nfs:${BUILD_VERSION}
+
 docker-debug:
 	cat Dockerfile.debug | docker build -t gozap/csi-nfs:debug -f - .
+
+clean:
+	rm -rf dist
 
 .PHONY: all release clean install docker docker-debug
 
