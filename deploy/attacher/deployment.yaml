@@ -16,7 +16,8 @@ spec:
       labels:
         external-attacher: csi-attacher
     spec:
-      hostNetwork: true
+      # debug only(connect to dlv 2345 port)
+      #hostNetwork: true
       serviceAccountName: csi-attacher
       containers:
         - name: csi-attacher
@@ -33,7 +34,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs:debug
+          image: gozap/csi-nfs:v1.0.1
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"

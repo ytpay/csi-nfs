@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
 		nfs.NewNFSDriver(
-			strings.Trim(Version, "v"),
+			strings.TrimPrefix(Version, "v"),
 			nodeID,
 			endpoint,
 			maxStorageCapacity,
@@ -63,7 +63,7 @@ func init() {
 	cobra.OnInitialize(initLog)
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug log")
 
-	rootCmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "node id")
+	rootCmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "csi node id")
 	_ = rootCmd.MarkPersistentFlagRequired("nodeid")
 
 	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "csi endpoint")

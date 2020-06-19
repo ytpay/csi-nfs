@@ -16,7 +16,8 @@ spec:
       labels:
         external-provisioner: csi-provisioner
     spec:
-      hostNetwork: true
+      # debug only(connect to dlv 2345 port)
+      #hostNetwork: true
       serviceAccountName: csi-provisioner
       containers:
         - name: csi-provisioner
@@ -32,7 +33,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs:debug
+          image: gozap/csi-nfs:v1.0.0
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -46,12 +47,13 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: NFS_LOCAL_MOUNT
+              value: /nfs
+            # replace with real nfs server config
             - name: NFS_SERVER
               value: 172.16.10.50
             - name: NFS_SHARE
               value: /mnt/freenas/kubernetes
-            - name: NFS_LOCAL_MOUNT
-              value: /nfs
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: socket-dir
@@ -64,6 +66,7 @@ spec:
           emptyDir: {}
         - name: nfs-server
           nfs:
+            # replace with real nfs server config
             server: 172.16.10.50
             path: /mnt/freenas/kubernetes
 
