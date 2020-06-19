@@ -9,9 +9,8 @@ all: clean
 					-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
 					-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
-release: docker-push
-	rm -f dist/deploy.tar.gz
-	tar -zcf dist/deploy.tar.gz deploy
+release: docker-push clean
+	mkdir dist && tar -zcf dist/deploy.tar.gz deploy
 	ghr -u gozap -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} dist/deploy.tar.gz
 
 install:
