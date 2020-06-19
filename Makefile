@@ -20,9 +20,11 @@ install:
 
 docker:
 	cat Dockerfile | docker build -t gozap/csi-nfs:${BUILD_VERSION} -f - .
+	docker tag gozap/csi-nfs:${BUILD_VERSION} gozap/csi-nfs:latest
 
 docker-push: docker
 	docker push gozap/csi-nfs:${BUILD_VERSION}
+	docker push gozap/csi-nfs:latest
 
 docker-debug:
 	cat Dockerfile.debug | docker build -t gozap/csi-nfs:debug -f - .
