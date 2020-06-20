@@ -42,8 +42,42 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 	}
 
+	capacity := uint64(req.GetCapacityRange().GetRequiredBytes())
+	if capacity >= cs.Driver.maxStorageCapacity {
+		return nil, status.Errorf(codes.OutOfRange, "Requested capacity %d exceeds maximum allowed %d", capacity, cs.Driver.maxStorageCapacity)
+	}
+
+	notMnt, err := cs.mounter.IsLikelyNotMountPoint(cs.Driver.nfsLocalMountPoint)
+	if err != nil {
+		if os.IsNotExist(err) {
+			logrus.Info("create nfs local mount path")
+			if err := os.MkdirAll(cs.Driver.nfsLocalMountPoint, 0750); err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			notMnt = true
+		} else {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	if notMnt {
+		var mo []string
+		for _, c := range caps {
+			mo = append(mo, c.GetMount().GetMountFlags()...)
+		}
+		// always mounted rw mode
+		mo = append(mo, "rw")
+		source := fmt.Sprintf("%s:%s", cs.Driver.nfsServer, cs.Driver.nfsSharePoint)
+		logrus.Infof("mount local nfs: %s => %s(%v)", source, cs.Driver.nfsLocalMountPoint, mo)
+		err = cs.mounter.Mount(source, cs.Driver.nfsLocalMountPoint, "nfs", mo)
+		if err != nil {
+			logrus.Errorf("failed to mount [%s] to local mount point: %s:%s", source, cs.Driver.nfsLocalMountPoint, err)
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, reqVolName)
-	_, err := os.Stat(volPath)
+	_, err = os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(volPath, 0755)
@@ -53,11 +87,6 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		} else {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
-	}
-
-	capacity := uint64(req.GetCapacityRange().GetRequiredBytes())
-	if capacity >= cs.Driver.maxStorageCapacity {
-		return nil, status.Errorf(codes.OutOfRange, "Requested capacity %d exceeds maximum allowed %d", capacity, cs.Driver.maxStorageCapacity)
 	}
 
 	volContext := req.GetParameters()

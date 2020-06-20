@@ -34,7 +34,11 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs:v1.0.1
+          image: gozap/csi-nfs:v1.0.2
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -49,7 +53,6 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-
       volumes:
         - name: socket-dir
           emptyDir: {}

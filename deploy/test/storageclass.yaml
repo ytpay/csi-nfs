@@ -3,5 +3,13 @@ kind: StorageClass
 metadata:
   name: csi-nfs
 provisioner: csi-nfs
+reclaimPolicy: Retain
+mountOptions:
+  - rw
+  - soft
+  - timeo=10
+  - retry=3
+  # default use nfs v4
+  - vers=4
 parameters:
   archiveOnDelete: "false"

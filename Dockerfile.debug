@@ -29,7 +29,7 @@ ENV LC_ALL en_US.UTF-8
 ENV LANGUAGE en_US:en
 
 RUN set -ex \
-    && apk add bash tzdata ca-certificates \
+    && apk add bash tzdata ca-certificates nfs-utils \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
     && rm -rf /var/cache/apk/*

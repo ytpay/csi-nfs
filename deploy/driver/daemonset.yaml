@@ -32,7 +32,7 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: csi-nfs
-          image: gozap/csi-nfs:v1.0.1
+          image: gozap/csi-nfs:v1.0.2
           securityContext:
             privileged: true
             capabilities:
@@ -57,6 +57,10 @@ spec:
               mountPath: /csi
             - name: registration-dir
               mountPath: /registration
+            # nfs ci driver will create a shared mount point in this directory
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: Bidirectional
       volumes:
         - name: plugin-dir
           hostPath:
@@ -65,4 +69,9 @@ spec:
         - name: registration-dir
           hostPath:
             path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        # nfs ci driver will create a shared mount point in this directory
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
             type: Directory
