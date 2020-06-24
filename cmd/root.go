@@ -16,7 +16,7 @@ var (
 	CommitID  string
 
 	versionTpl = `
-Name: csi-nfs
+Name: %s
 Version: %s
 Arch: %s
 BuildDate: %s
@@ -26,9 +26,11 @@ CommitID: %s
 
 var (
 	debug              bool
+	name               string
 	endpoint           string
 	nodeID             string
 	maxStorageCapacity string
+
 	nfsServer          string
 	nfsSharePoint      string
 	nfsLocalMountPoint string
@@ -40,7 +42,8 @@ var rootCmd = &cobra.Command{
 	Short:   "CSI based NFS driver",
 	Version: Version,
 	Run: func(cmd *cobra.Command, args []string) {
-		nfs.NewNFSDriver(
+		nfs.NewCSIDriver(
+			name,
 			strings.TrimPrefix(Version, "v"),
 			nodeID,
 			endpoint,
@@ -53,12 +56,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatal(err)
-	}
-}
-
 func init() {
 	cobra.OnInitialize(initLog)
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug log")
@@ -69,12 +66,17 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "csi endpoint")
 	_ = rootCmd.MarkPersistentFlagRequired("endpoint")
 
+	rootCmd.PersistentFlags().StringVar(&name, "name", "csi-nfs", "csi name")
+	_ = rootCmd.PersistentFlags().MarkHidden("name")
+	_ = rootCmd.MarkPersistentFlagRequired("name")
+
 	rootCmd.PersistentFlags().StringVar(&maxStorageCapacity, "maxstoragecapacity", "50G", "nfs maxStorageCapacity")
 	rootCmd.PersistentFlags().StringVar(&nfsServer, "nfsserver", "", "nfs server")
 	rootCmd.PersistentFlags().StringVar(&nfsSharePoint, "nfssharepoint", "/", "nfs server share point")
 	rootCmd.PersistentFlags().StringVar(&nfsLocalMountPoint, "nfslocalmountpoint", "/nfs", "nfs local mount point")
 	rootCmd.PersistentFlags().StringVar(&nfsSnapshotPath, "nfssnapshotpath", "/snapshot", "nfs snapshot path")
-	rootCmd.SetVersionTemplate(fmt.Sprintf(versionTpl, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID))
+
+	rootCmd.SetVersionTemplate(fmt.Sprintf(versionTpl, name, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID))
 }
 
 func initLog() {
@@ -86,4 +88,10 @@ func initLog() {
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		logrus.Fatal(err)
+	}
 }

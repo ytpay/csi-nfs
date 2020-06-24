@@ -23,12 +23,8 @@ type nfsDriver struct {
 	cscap []*csi.ControllerServiceCapability
 }
 
-const (
-	driverName = "csi-nfs"
-)
-
-func NewNFSDriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsSnapshotPath string) *nfsDriver {
-	logrus.Infof("Driver: %s version: %s", driverName, version)
+func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsSnapshotPath string) *nfsDriver {
+	logrus.Infof("Driver: %s version: %s", name, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
 	if err != nil {
@@ -37,7 +33,7 @@ func NewNFSDriver(version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsS
 	}
 
 	n := &nfsDriver{
-		name:               driverName,
+		name:               name,
 		nodeID:             nodeID,
 		version:            version,
 		endpoint:           endpoint,
