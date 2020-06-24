@@ -11,6 +11,7 @@ type nfsDriver struct {
 	nodeID   string
 	version  string
 	endpoint string
+	debug    bool
 
 	enableIdentityServer   bool
 	enableControllerServer bool
@@ -27,7 +28,7 @@ type nfsDriver struct {
 	cscap []*csi.ControllerServiceCapability
 }
 
-func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsLocalMountOptions, nfsSnapshotPath string, enableIdentityServer, enableControllerServer, enableNodeServer bool) *nfsDriver {
+func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsLocalMountOptions, nfsSnapshotPath string, enableIdentityServer, enableControllerServer, enableNodeServer, debug bool) *nfsDriver {
 	logrus.Infof("Driver: %s version: %s", name, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
@@ -41,6 +42,7 @@ func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer
 		nodeID:                 nodeID,
 		version:                version,
 		endpoint:               endpoint,
+		debug:                  debug,
 		enableIdentityServer:   enableIdentityServer,
 		enableControllerServer: enableControllerServer,
 		enableNodeServer:       enableNodeServer,
@@ -71,15 +73,18 @@ func (n *nfsDriver) Run() {
 
 	if n.enableIdentityServer {
 		identityServer = NewIdentityServer(n)
+		logrus.Info("Enable gRPC Server: IdentityServer")
 	}
 	if n.enableControllerServer {
 		controllerServer = NewControllerServer(n)
+		logrus.Info("Enable gRPC Server: ControllerServer")
 	}
 	if n.enableNodeServer {
 		nodeServer = NewNodeServer(n)
+		logrus.Info("Enable gRPC Server: NodeServer")
 	}
 
-	server := NewNonBlockingGRPCServer()
+	server := NewNonBlockingGRPCServer(n.debug)
 	server.Start(
 		n.endpoint,
 		identityServer,

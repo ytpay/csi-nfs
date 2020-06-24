@@ -45,6 +45,7 @@ spec:
           args :
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
+            - "--enable-identity-server"
             - "--enable-node-server"
           env:
             - name: NODE_ID

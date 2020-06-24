@@ -23,12 +23,13 @@ type NonBlockingGRPCServer interface {
 	ForceStop()
 }
 
-func NewNonBlockingGRPCServer() NonBlockingGRPCServer {
-	return &nonBlockingGRPCServer{}
+func NewNonBlockingGRPCServer(debug bool) NonBlockingGRPCServer {
+	return &nonBlockingGRPCServer{debug: debug}
 }
 
 // NonBlocking server
 type nonBlockingGRPCServer struct {
+	debug  bool
 	wg     sync.WaitGroup
 	server *grpc.Server
 }
@@ -69,8 +70,9 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 		logrus.Fatalf("Failed to listen: %v", err)
 	}
 
-	opts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(logGRPC),
+	var opts []grpc.ServerOption
+	if s.debug {
+		opts = append(opts, grpc.UnaryInterceptor(logGRPC))
 	}
 	server := grpc.NewServer(opts...)
 	s.server = server
