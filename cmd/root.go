@@ -61,6 +61,7 @@ var rootCmd = &cobra.Command{
 			enableIdentityServer,
 			enableControllerServer,
 			enableNodeServer,
+			debug,
 		).Run()
 	},
 }
