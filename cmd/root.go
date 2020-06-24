@@ -81,7 +81,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&name, "name", "csi-nfs", "CSI Driver Name")
 	_ = rootCmd.PersistentFlags().MarkHidden("name")
-	_ = rootCmd.MarkPersistentFlagRequired("name")
 
 	rootCmd.PersistentFlags().StringVar(&nfsServer, "nfs-server", "", "NFS Server Address")
 	rootCmd.PersistentFlags().StringVar(&nfsSharePoint, "nfs-server-share-point", "/", "NFS Server Share Point")
