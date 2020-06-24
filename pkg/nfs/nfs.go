@@ -7,23 +7,27 @@ import (
 )
 
 type nfsDriver struct {
-	name    string
-	nodeID  string
-	version string
-
+	name     string
+	nodeID   string
+	version  string
 	endpoint string
 
-	maxStorageCapacity uint64
-	nfsServer          string
-	nfsSharePoint      string
-	nfsLocalMountPoint string
-	nfsSnapshotPath    string
+	enableIdentityServer   bool
+	enableControllerServer bool
+	enableNodeServer       bool
+
+	maxStorageCapacity   uint64
+	nfsServer            string
+	nfsSharePoint        string
+	nfsLocalMountPoint   string
+	nfsLocalMountOptions string
+	nfsSnapshotPath      string
 
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
 }
 
-func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsSnapshotPath string) *nfsDriver {
+func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer, nfsSharePoint, nfsLocalMountPoint, nfsLocalMountOptions, nfsSnapshotPath string, enableIdentityServer, enableControllerServer, enableNodeServer bool) *nfsDriver {
 	logrus.Infof("Driver: %s version: %s", name, version)
 
 	msc, err := bytefmt.ToBytes(maxstoragecapacity)
@@ -33,15 +37,19 @@ func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer
 	}
 
 	n := &nfsDriver{
-		name:               name,
-		nodeID:             nodeID,
-		version:            version,
-		endpoint:           endpoint,
-		maxStorageCapacity: msc,
-		nfsServer:          nfsServer,
-		nfsSharePoint:      nfsSharePoint,
-		nfsLocalMountPoint: nfsLocalMountPoint,
-		nfsSnapshotPath:    nfsSnapshotPath,
+		name:                   name,
+		nodeID:                 nodeID,
+		version:                version,
+		endpoint:               endpoint,
+		enableIdentityServer:   enableIdentityServer,
+		enableControllerServer: enableControllerServer,
+		enableNodeServer:       enableNodeServer,
+		maxStorageCapacity:     msc,
+		nfsServer:              nfsServer,
+		nfsSharePoint:          nfsSharePoint,
+		nfsLocalMountPoint:     nfsLocalMountPoint,
+		nfsLocalMountOptions:   nfsLocalMountOptions,
+		nfsSnapshotPath:        nfsSnapshotPath,
 	}
 
 	n.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
@@ -57,12 +65,26 @@ func NewCSIDriver(name, version, nodeID, endpoint, maxstoragecapacity, nfsServer
 }
 
 func (n *nfsDriver) Run() {
+	var identityServer csi.IdentityServer
+	var controllerServer csi.ControllerServer
+	var nodeServer csi.NodeServer
+
+	if n.enableIdentityServer {
+		identityServer = NewIdentityServer(n)
+	}
+	if n.enableControllerServer {
+		controllerServer = NewControllerServer(n)
+	}
+	if n.enableNodeServer {
+		nodeServer = NewNodeServer(n)
+	}
+
 	server := NewNonBlockingGRPCServer()
 	server.Start(
 		n.endpoint,
-		NewIdentityServer(n),
-		NewControllerServer(n),
-		NewNodeServer(n),
+		identityServer,
+		controllerServer,
+		nodeServer,
 	)
 	server.Wait()
 }

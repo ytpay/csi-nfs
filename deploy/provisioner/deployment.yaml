@@ -37,13 +37,16 @@ spec:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: gozap/csi-nfs:v1.0.2
+          image: gozap/csi-nfs:v1.0.3
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
-            - "--nfsserver=$(NFS_SERVER)"
-            - "--nfssharepoint=$(NFS_SHARE)"
-            - "--nfslocalmountpoint=$(NFS_LOCAL_MOUNT)"
+            - "--nfs-server=$(NFS_SERVER)"
+            - "--nfs-server-share-point=$(NFS_SERVER_SHARE_POINT)"
+            - "--nfs-local-mount-point=$(NFS_LOCAL_MOUNT_POINT)"
+            - "--nfs-local-mount-options=$(NFS_LOCAL_MOUNT_OPTIONS)"
+            - "--enable-identity-server"
+            - "--enable-controller-server"
           lifecycle:
             preStop:
               exec:
@@ -55,12 +58,14 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
-            - name: NFS_LOCAL_MOUNT
+            - name: NFS_LOCAL_MOUNT_POINT
               value: /nfs
+            - name: NFS_LOCAL_MOUNT_OPTIONS
+              value: "rw,vers=4,soft,timeo=10,retry=3"
             # replace with real nfs server config
             - name: NFS_SERVER
               value: 172.16.10.50
-            - name: NFS_SHARE
+            - name: NFS_SERVER_SHARE_POINT
               value: /mnt/freenas/kubernetes
           volumeMounts:
             - name: socket-dir

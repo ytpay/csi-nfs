@@ -31,10 +31,15 @@ var (
 	nodeID             string
 	maxStorageCapacity string
 
-	nfsServer          string
-	nfsSharePoint      string
-	nfsLocalMountPoint string
-	nfsSnapshotPath    string
+	nfsServer            string
+	nfsSharePoint        string
+	nfsLocalMountPoint   string
+	nfsLocalMountOptions string
+	nfsSnapshotPath      string
+
+	enableIdentityServer   bool
+	enableControllerServer bool
+	enableNodeServer       bool
 )
 
 var rootCmd = &cobra.Command{
@@ -51,30 +56,39 @@ var rootCmd = &cobra.Command{
 			nfsServer,
 			nfsSharePoint,
 			nfsLocalMountPoint,
+			nfsLocalMountOptions,
 			nfsSnapshotPath,
+			enableIdentityServer,
+			enableControllerServer,
+			enableNodeServer,
 		).Run()
 	},
 }
 
 func init() {
 	cobra.OnInitialize(initLog)
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug log")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug log")
 
-	rootCmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "csi node id")
+	rootCmd.PersistentFlags().BoolVar(&enableIdentityServer, "enable-identity-server", false, "Enable Identity gRPC Server")
+	rootCmd.PersistentFlags().BoolVar(&enableControllerServer, "enable-controller-server", false, "Enable Controller gRPC Server")
+	rootCmd.PersistentFlags().BoolVar(&enableNodeServer, "enable-node-server", false, "Enable Node gRPC Server")
+
+	rootCmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "CSI Node ID")
 	_ = rootCmd.MarkPersistentFlagRequired("nodeid")
 
-	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "csi endpoint")
+	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "unix:///csi/csi.sock", "CSI gRPC Server Endpoint")
 	_ = rootCmd.MarkPersistentFlagRequired("endpoint")
 
-	rootCmd.PersistentFlags().StringVar(&name, "name", "csi-nfs", "csi name")
+	rootCmd.PersistentFlags().StringVar(&name, "name", "csi-nfs", "CSI Driver Name")
 	_ = rootCmd.PersistentFlags().MarkHidden("name")
 	_ = rootCmd.MarkPersistentFlagRequired("name")
 
-	rootCmd.PersistentFlags().StringVar(&maxStorageCapacity, "maxstoragecapacity", "50G", "nfs maxStorageCapacity")
-	rootCmd.PersistentFlags().StringVar(&nfsServer, "nfsserver", "", "nfs server")
-	rootCmd.PersistentFlags().StringVar(&nfsSharePoint, "nfssharepoint", "/", "nfs server share point")
-	rootCmd.PersistentFlags().StringVar(&nfsLocalMountPoint, "nfslocalmountpoint", "/nfs", "nfs local mount point")
-	rootCmd.PersistentFlags().StringVar(&nfsSnapshotPath, "nfssnapshotpath", "/snapshot", "nfs snapshot path")
+	rootCmd.PersistentFlags().StringVar(&nfsServer, "nfs-server", "", "NFS Server Address")
+	rootCmd.PersistentFlags().StringVar(&nfsSharePoint, "nfs-server-share-point", "/", "NFS Server Share Point")
+	rootCmd.PersistentFlags().StringVar(&nfsLocalMountPoint, "nfs-local-mount-point", "/nfs", "NFS Local Mount Point")
+	rootCmd.PersistentFlags().StringVar(&nfsLocalMountOptions, "nfs-local-mount-options", "rw,vers=4,soft,timeo=10,retry=3", "NFS Local Mount Options")
+	rootCmd.PersistentFlags().StringVar(&nfsSnapshotPath, "nfs-local-snapshot-mount-point", "/snapshot", "NFS Local Snapshot Mount Point")
+	rootCmd.PersistentFlags().StringVar(&maxStorageCapacity, "max-storage-capacity", "50G", "Volume Max Storage Capacity")
 
 	rootCmd.SetVersionTemplate(fmt.Sprintf(versionTpl, name, Version, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID))
 }

@@ -20,14 +20,29 @@ func NewIdentityServer(d *nfsDriver) *IdentityServer {
 }
 
 func NewControllerServer(d *nfsDriver) *ControllerServer {
+	if d.nfsLocalMountOptions == "" {
+		// default mount options
+		d.nfsLocalMountOptions = "rw,soft,timeo=10,retry=3,vers=4"
+	}
+	if strings.Contains(d.nfsLocalMountOptions, "rw") {
+		logrus.Warn("nfs server is not mounted with rw mode, volume creation may fail")
+	}
+	mounter := mount.New("")
+	source := fmt.Sprintf("%s:%s", d.nfsServer, d.nfsSharePoint)
+	logrus.Infof("mount local nfs: %s => %s(%s)", source, d.nfsLocalMountPoint, d.nfsLocalMountOptions)
+	err := mounter.Mount(source, d.nfsLocalMountPoint, "nfs", strings.Split(d.nfsLocalMountOptions, ","))
+	if err != nil {
+		logrus.Fatalf("failed to mount [%s:%s] to local mount point: %s:%s", d.nfsServer, d.nfsSharePoint, d.nfsLocalMountPoint, err)
+	}
+
 	return &ControllerServer{
 		Driver:  d,
-		mounter: mount.New(""),
+		mounter: mounter,
 	}
 }
 
-func NewNodeServer(n *nfsDriver) *nodeServer {
-	return &nodeServer{
+func NewNodeServer(n *nfsDriver) *NodeServer {
+	return &NodeServer{
 		Driver:  n,
 		mounter: mount.New(""),
 	}

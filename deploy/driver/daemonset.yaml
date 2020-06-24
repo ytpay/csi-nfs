@@ -32,7 +32,7 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: csi-nfs
-          image: gozap/csi-nfs:v1.0.2
+          image: gozap/csi-nfs:v1.0.3
           securityContext:
             privileged: true
             capabilities:
@@ -45,6 +45,7 @@ spec:
           args :
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
+            - "--enable-node-server"
           env:
             - name: NODE_ID
               valueFrom:

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"k8s.io/utils/mount"
+
 	"github.com/golang/protobuf/ptypes"
 
 	"k8s.io/utils/exec"
@@ -17,7 +19,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/utils/mount"
 )
 
 type ControllerServer struct {
@@ -27,10 +28,11 @@ type ControllerServer struct {
 
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	reqVolName := req.GetName()
+	logrus.Infof("CreateVolume: volume name: %s", reqVolName)
+
 	if reqVolName == "" {
 		return nil, status.Error(codes.InvalidArgument, "Name missing in request")
 	}
-	logrus.Infof("create volume: %s", reqVolName)
 
 	caps := req.GetVolumeCapabilities()
 	if caps == nil {
@@ -47,37 +49,8 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Errorf(codes.OutOfRange, "Requested capacity %d exceeds maximum allowed %d", capacity, cs.Driver.maxStorageCapacity)
 	}
 
-	notMnt, err := cs.mounter.IsLikelyNotMountPoint(cs.Driver.nfsLocalMountPoint)
-	if err != nil {
-		if os.IsNotExist(err) {
-			logrus.Info("create nfs local mount path")
-			if err := os.MkdirAll(cs.Driver.nfsLocalMountPoint, 0750); err != nil {
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-			notMnt = true
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	if notMnt {
-		var mo []string
-		for _, c := range caps {
-			mo = append(mo, c.GetMount().GetMountFlags()...)
-		}
-		// always mounted rw mode
-		mo = append(mo, "rw")
-		source := fmt.Sprintf("%s:%s", cs.Driver.nfsServer, cs.Driver.nfsSharePoint)
-		logrus.Infof("mount local nfs: %s => %s(%v)", source, cs.Driver.nfsLocalMountPoint, mo)
-		err = cs.mounter.Mount(source, cs.Driver.nfsLocalMountPoint, "nfs", mo)
-		if err != nil {
-			logrus.Errorf("failed to mount [%s] to local mount point: %s:%s", source, cs.Driver.nfsLocalMountPoint, err)
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, reqVolName)
-	_, err = os.Stat(volPath)
+	_, err := os.Stat(volPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(volPath, 0755)
@@ -122,11 +95,11 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			CapacityBytes: int64(capacity),
 		},
 	}, nil
-
 }
 
 func (cs *ControllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	logrus.Infof("delete volume: %s", req.VolumeId)
+	logrus.Infof("DeleteVolume: volume id: %s", req.VolumeId)
+
 	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.VolumeId)
 	_, err := os.Stat(volPath)
 	if err != nil {
@@ -153,25 +126,12 @@ func (cs *ControllerServer) ControllerUnpublishVolume(_ context.Context, _ *csi.
 	return nil, status.Error(codes.Unimplemented, "Unimplemented ControllerUnpublishVolume")
 }
 
-func (cs *ControllerServer) ValidateVolumeCapabilities(_ context.Context, _ *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Unimplemented ValidateVolumeCapabilities")
-}
-
 func (cs *ControllerServer) ListVolumes(_ context.Context, _ *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "Unimplemented ListVolumes")
 }
 
 func (cs *ControllerServer) GetCapacity(_ context.Context, _ *csi.GetCapacityRequest) (*csi.GetCapacityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "Unimplemented GetCapacity")
-}
-
-// ControllerGetCapabilities implements the default GRPC callout.
-// Default supports all capabilities
-func (cs *ControllerServer) ControllerGetCapabilities(_ context.Context, _ *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-	logrus.Infof("Using default ControllerGetCapabilities")
-	return &csi.ControllerGetCapabilitiesResponse{
-		Capabilities: cs.Driver.cscap,
-	}, nil
 }
 
 func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
@@ -210,7 +170,7 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 }
 
 func (cs *ControllerServer) DeleteSnapshot(_ context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
-	logrus.Infof("delete volume snapshot: %s", req.SnapshotId)
+	logrus.Infof("DeleteSnapshot: snapshot id %s", req.SnapshotId)
 	snapPath := filepath.Join(cs.Driver.nfsLocalMountPoint, cs.Driver.nfsSnapshotPath)
 	_, err := os.Stat(snapPath)
 	if err != nil {
@@ -235,4 +195,52 @@ func (cs *ControllerServer) ControllerExpandVolume(_ context.Context, _ *csi.Con
 
 func (cs *ControllerServer) ControllerGetVolume(_ context.Context, _ *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "Unimplemented ControllerGetVolume")
+}
+
+func (cs *ControllerServer) ValidateVolumeCapabilities(_ context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
+	if req.VolumeId == "" {
+		return nil, status.Error(codes.InvalidArgument, "ValidateVolumeCapabilities Volume ID must be provided")
+	}
+
+	if req.VolumeCapabilities == nil {
+		return nil, status.Error(codes.InvalidArgument, "ValidateVolumeCapabilities Volume Capabilities must be provided")
+	}
+
+	logrus.Infof("ValidateVolumeCapabilities: volume_id: %s, volume_capabilities: %v, supported_capabilities: %v", req.VolumeId, req.VolumeCapabilities, cs.Driver.cap)
+
+	// check if volume exist before trying to validate it it
+	volPath := filepath.Join(cs.Driver.nfsLocalMountPoint, req.VolumeId)
+	_, err := os.Stat(volPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, status.Errorf(codes.NotFound, "volume %q does not exist", req.VolumeId)
+		} else {
+			return nil, err
+		}
+	}
+
+	// if it's not supported, we shouldn't override it
+	var vc []*csi.VolumeCapability
+	for _, c := range cs.Driver.cap {
+		vc = append(vc, &csi.VolumeCapability{
+			AccessMode: c,
+		})
+	}
+	resp := &csi.ValidateVolumeCapabilitiesResponse{
+		Confirmed: &csi.ValidateVolumeCapabilitiesResponse_Confirmed{
+			VolumeCapabilities: vc,
+		},
+	}
+
+	logrus.Infof("ValidateVolumeCapabilities: confirmed %v supported capabilities", resp.Confirmed)
+	return resp, nil
+}
+
+// ControllerGetCapabilities implements the default GRPC callout.
+// Default supports all capabilities
+func (cs *ControllerServer) ControllerGetCapabilities(_ context.Context, _ *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
+	logrus.Infof("Using default ControllerGetCapabilities")
+	return &csi.ControllerGetCapabilitiesResponse{
+		Capabilities: cs.Driver.cscap,
+	}, nil
 }
