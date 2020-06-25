@@ -72,16 +72,16 @@ func (n *nfsDriver) Run() {
 	var nodeServer csi.NodeServer
 
 	if n.enableIdentityServer {
-		identityServer = NewIdentityServer(n)
 		logrus.Info("Enable gRPC Server: IdentityServer")
+		identityServer = NewIdentityServer(n)
 	}
 	if n.enableControllerServer {
-		controllerServer = NewControllerServer(n)
 		logrus.Info("Enable gRPC Server: ControllerServer")
+		controllerServer = NewControllerServer(n)
 	}
 	if n.enableNodeServer {
-		nodeServer = NewNodeServer(n)
 		logrus.Info("Enable gRPC Server: NodeServer")
+		nodeServer = NewNodeServer(n)
 	}
 
 	server := NewNonBlockingGRPCServer(n.debug)

@@ -239,7 +239,7 @@ func (cs *ControllerServer) ValidateVolumeCapabilities(_ context.Context, req *c
 // ControllerGetCapabilities implements the default GRPC callout.
 // Default supports all capabilities
 func (cs *ControllerServer) ControllerGetCapabilities(_ context.Context, _ *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-	logrus.Infof("Using default ControllerGetCapabilities")
+	logrus.Infof("ControllerGetCapabilities: %s", cs.Driver.cscap)
 	return &csi.ControllerGetCapabilitiesResponse{
 		Capabilities: cs.Driver.cscap,
 	}, nil

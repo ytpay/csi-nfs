@@ -25,7 +25,7 @@ func NewControllerServer(d *nfsDriver) *ControllerServer {
 		// default mount options
 		d.nfsLocalMountOptions = "rw,soft,timeo=10,retry=3,vers=4"
 	}
-	if strings.Contains(d.nfsLocalMountOptions, "rw") {
+	if !strings.Contains(d.nfsLocalMountOptions, "rw") {
 		logrus.Warn("nfs server is not mounted with rw mode, volume creation may fail")
 	}
 	_, err := os.Stat(d.nfsLocalMountPoint)

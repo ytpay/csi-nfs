@@ -88,17 +88,16 @@ func (ns *NodeServer) NodeUnpublishVolume(_ context.Context, req *csi.NodeUnpubl
 }
 
 func (ns *NodeServer) NodeGetInfo(_ context.Context, _ *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	logrus.Infof("Using default NodeGetInfo")
-	return &csi.NodeGetInfoResponse{
+	nodeInfo := &csi.NodeGetInfoResponse{
 		NodeId:            ns.Driver.nodeID,
 		MaxVolumesPerNode: 65535,
-	}, nil
+	}
+	logrus.Infof("NodeGetInfo: %s", nodeInfo)
+	return nodeInfo, nil
 }
 
 func (ns *NodeServer) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	logrus.Infof("Using default NodeGetCapabilities")
-
-	return &csi.NodeGetCapabilitiesResponse{
+	nodeCaps := &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
 			{
 				Type: &csi.NodeServiceCapability_Rpc{
@@ -108,7 +107,10 @@ func (ns *NodeServer) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapab
 				},
 			},
 		},
-	}, nil
+	}
+	logrus.Infof("NodeGetCapabilities: %s", nodeCaps)
+
+	return nodeCaps, nil
 }
 
 func (ns *NodeServer) NodeGetVolumeStats(_ context.Context, _ *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
