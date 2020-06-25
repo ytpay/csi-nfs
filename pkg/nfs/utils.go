@@ -2,6 +2,7 @@ package nfs
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -27,10 +28,21 @@ func NewControllerServer(d *nfsDriver) *ControllerServer {
 	if strings.Contains(d.nfsLocalMountOptions, "rw") {
 		logrus.Warn("nfs server is not mounted with rw mode, volume creation may fail")
 	}
+	_, err := os.Stat(d.nfsLocalMountPoint)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(d.nfsLocalMountPoint, 0755)
+			if err != nil {
+				logrus.Fatalf("failed to create local mount point: %s", err)
+			}
+		} else {
+			logrus.Fatalf("failed to create local mount point: %s", err)
+		}
+	}
 	mounter := mount.New("")
 	source := fmt.Sprintf("%s:%s", d.nfsServer, d.nfsSharePoint)
 	logrus.Infof("mount local nfs: %s => %s(%s)", source, d.nfsLocalMountPoint, d.nfsLocalMountOptions)
-	err := mounter.Mount(source, d.nfsLocalMountPoint, "nfs", strings.Split(d.nfsLocalMountOptions, ","))
+	err = mounter.Mount(source, d.nfsLocalMountPoint, "nfs", strings.Split(d.nfsLocalMountOptions, ","))
 	if err != nil {
 		logrus.Fatalf("failed to mount [%s:%s] to local mount point: %s:%s", d.nfsServer, d.nfsSharePoint, d.nfsLocalMountPoint, err)
 	}
