@@ -85,7 +85,6 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				return nil, status.Error(codes.Internal, fmt.Sprintf("%s: %s", err.Error(), string(outBs)))
 			}
 		}
-
 	}
 
 	return &csi.CreateVolumeResponse{
@@ -182,6 +181,7 @@ func (cs *ControllerServer) DeleteSnapshot(_ context.Context, req *csi.DeleteSna
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
 	return &csi.DeleteSnapshotResponse{}, nil
 }
 
