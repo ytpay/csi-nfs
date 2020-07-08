@@ -20,7 +20,7 @@ install:
                			-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
 docker:
-	cat Dockerfile | docker build -t ${CSI_DOCKER_IMAGE}:${BUILD_VERSION} -f - .
+	cat Dockerfile | docker build --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t ${CSI_DOCKER_IMAGE}:${BUILD_VERSION} -f - .
 	docker tag ${CSI_DOCKER_IMAGE}:${BUILD_VERSION} ${CSI_DOCKER_IMAGE}:latest
 
 docker-push: docker
@@ -28,7 +28,7 @@ docker-push: docker
 	docker push ${CSI_DOCKER_IMAGE}:latest
 
 docker-debug:
-	cat Dockerfile.debug | docker build -t ${CSI_DOCKER_IMAGE}:debug -f - .
+	cat Dockerfile.debug | docker build --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t ${CSI_DOCKER_IMAGE}:debug -f - .
 
 clean:
 	rm -rf dist
