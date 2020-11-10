@@ -32,7 +32,7 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: csi-nfs
-          image: gozap/csi-nfs:v1.0.3
+          image: ytpay/csi-nfs:v1.0.4
           securityContext:
             privileged: true
             capabilities:

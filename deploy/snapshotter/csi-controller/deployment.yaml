@@ -39,7 +39,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: csi-nfs
-          image: gozap/csi-nfs:debug
+          image: ytpay/csi-nfs:debug
           args:
             - "--"
             - "--nodeid=$(NODE_ID)"

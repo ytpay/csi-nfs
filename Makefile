@@ -1,23 +1,23 @@
 BUILD_VERSION   	:= $(shell cat version)
 BUILD_DATE      	:= $(shell date "+%F %T")
 COMMIT_SHA1     	:= $(shell git rev-parse HEAD)
-CSI_DOCKER_IMAGE 	:= gozap/csi-nfs
+CSI_DOCKER_IMAGE 	:= ytpay/csi-nfs
 
 all: clean
 	gox -osarch="darwin/amd64 linux/386 linux/amd64 linux/arm" \
 		-output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" \
-		-ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
-					-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
-					-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
+		-ldflags	"-X 'github.com/ytpay/csi-nfs/cmd.Version=${BUILD_VERSION}' \
+					-X 'github.com/ytpay/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
+					-X 'github.com/ytpay/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
 release: docker-push clean
 	mkdir dist && tar -zcf dist/deploy.tar.gz deploy
-	ghr -u gozap -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} dist/deploy.tar.gz
+	ghr -u ytpay -t ${GITHUB_TOKEN} -replace -recreate -name "Bump ${BUILD_VERSION}" --debug ${BUILD_VERSION} dist/deploy.tar.gz
 
 install:
-	go install -ldflags	"-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
-               			-X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
-               			-X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
+	go install -ldflags	"-X 'github.com/ytpay/csi-nfs/cmd.Version=${BUILD_VERSION}' \
+               			-X 'github.com/ytpay/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
+               			-X 'github.com/ytpay/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
 docker:
 	cat Dockerfile | docker build --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t ${CSI_DOCKER_IMAGE}:${BUILD_VERSION} -f - .
@@ -38,4 +38,4 @@ clean:
 .EXPORT_ALL_VARIABLES:
 
 GO111MODULE = on
-GOPROXY = https://goproxy.cn
+#GOPROXY = https://goproxy.cn

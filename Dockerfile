@@ -2,7 +2,7 @@ FROM golang:1.14.4-alpine3.12 AS builder
 
 ENV GO111MODULE on
 ENV GOPROXY https://goproxy.cn
-ENV SRC_PATH ${GOPATH}/src/github.com/gozap/csi-nfs
+ENV SRC_PATH ${GOPATH}/src/github.com/ytpay/csi-nfs
 
 WORKDIR ${SRC_PATH}
 
@@ -14,9 +14,9 @@ RUN set -ex \
     && export BUILD_DATE=$(date "+%F %T") \
     && export COMMIT_SHA1=$(git rev-parse HEAD) \
     && go install -ldflags \
-        "-X 'github.com/gozap/csi-nfs/cmd.Version=${BUILD_VERSION}' \
-        -X 'github.com/gozap/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
-        -X 'github.com/gozap/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
+        "-X 'github.com/ytpay/csi-nfs/cmd.Version=${BUILD_VERSION}' \
+        -X 'github.com/ytpay/csi-nfs/cmd.BuildDate=${BUILD_DATE}' \
+        -X 'github.com/ytpay/csi-nfs/cmd.CommitID=${COMMIT_SHA1}'"
 
 FROM alpine:3.12
 

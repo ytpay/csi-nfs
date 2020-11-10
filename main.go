@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gozap/csi-nfs/cmd"
+import "github.com/ytpay/csi-nfs/cmd"
 
 func main() {
 	cmd.Execute()

@@ -37,7 +37,7 @@ spec:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
-          image: gozap/csi-nfs:v1.0.3
+          image: ytpay/csi-nfs:v1.0.4
           args:
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
